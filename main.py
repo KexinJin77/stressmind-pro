@@ -196,7 +196,9 @@ def main():
             c1, c2 = st.columns([3, 2])
             c1.info("请在左侧配置参数，并点击『开始扫描』启动测量。")
             lottie = load_lottieurl(LOTTIE_MEDITATION)
-            if lottie: with c2: st_lottie(lottie, height=200)
+            if lottie: 
+                with c2: 
+                    st_lottie(lottie, height=200)
         with t2:
             df_hist = load_history_data(current_user)
             if df_hist is not None and not df_hist.empty:
