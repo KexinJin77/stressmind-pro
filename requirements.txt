@@ -1,0 +1,9 @@
+streamlit
+pandas
+numpy
+opencv-python-headless
+scipy
+streamlit-authenticator
+streamlit-lottie
+plotly
+pyyaml

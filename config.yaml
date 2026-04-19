@@ -1,0 +1,23 @@
+cookie:
+  expiry_days: 30
+  key: signature_key
+  name: stress_mind_cookie
+credentials:
+  usernames:
+    admin:
+      name: 管理员
+      password: $2b$12$N9qo8uLOickgx2ZMRZoMyeIjZAgDt9.J6E9S.2yS8zRzV9.zX2X2y
+    cassie:
+      email: 124090260@link.cuhk.edu.cn
+      first_name: Kexin
+      last_name: Jin
+      logged_in: false
+      password: $2b$12$DuDI5OTZl7dHMdSXeQPbQu7aGaY/c6XB8NwTBvUkJ19Xtua/lhKKa
+      password_hint: free
+      roles: null
+    user1:
+      name: 测试用户
+      password: $2b$12$bN9t9/fZ21qToJmg3UPrsOL7bylnu7NrdLMUBqMd0XsHSCTmKDgCe
+preauthorized:
+  emails:
+  - melsby@gmail.com
