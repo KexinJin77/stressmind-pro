@@ -7,3 +7,5 @@ streamlit-authenticator
 streamlit-lottie
 plotly
 pyyaml
+streamlit-webrtc
+av
