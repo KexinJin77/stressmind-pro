@@ -13,7 +13,7 @@ import streamlit_authenticator as stauth
 from streamlit_lottie import st_lottie
 import plotly.express as px
 import plotly.graph_objects as go
-from streamlit_webrtc import webrtc_streamer, VideoProcessorBase
+from streamlit_webrtc import webrtc_streamer
 import av
 import threading
 
@@ -105,29 +105,26 @@ class CSVSource(DataSource):
         return val
 
 # ==========================================
-# 4. 用纯 Python 全局变量拯救卡死的 WebRTC 视频流
+# 🌟 修复：用纯 Python 全局变量拯救卡死的 WebRTC 视频流
 # ==========================================
-class HRVProcessor(VideoProcessorBase):
-    def __init__(self):
-        self.green_val = None
+global_webrtc_lock = threading.Lock()
+global_green_val = None
 
-    def recv(self, frame):
-        img = frame.to_ndarray(format="bgr24")
-        h, w, _ = img.shape
+def video_frame_callback(frame: av.VideoFrame) -> av.VideoFrame:
+    global global_green_val # 声明使用全局变量
+    img = frame.to_ndarray(format="bgr24")
+    h, w, _ = img.shape
+    roi = img[h//2-40:h//2+40, w//2-40:w//2+40]
+    
+    # 用最原始的全局变量交换数据，彻底解决崩溃问题
+    with global_webrtc_lock:
+        global_green_val = np.mean(roi[:, :, 1])
         
-        # 框选中心区域
-        roi = img[h//2-40:h//2+40, w//2-40:w//2+40]
-        
-        # 提取绿色通道均值并保存在类的属性中
-        self.green_val = np.mean(roi[:, :, 1]) 
-        
-        # 在画面上画出绿色的识别框
-        cv2.rectangle(img, (w//2-40, h//2-40), (w//2+50, h//2+50), (0, 255, 0), 2)
-        
-        return av.VideoFrame.from_ndarray(img, format="bgr24")
+    cv2.rectangle(img, (w//2-40, h//2-40), (w//2+50, h//2+50), (0, 255, 0), 2)
+    return av.VideoFrame.from_ndarray(img, format="bgr24")
 
 # ==========================================
-# 5. 呼吸引导模块
+# 🌟 修复：重写呼吸引导模块（告别页面狂闪与丢失）
 # ==========================================
 def breathing_guide():
     mode = st.session_state.get("breath_mode", "4-4")
@@ -171,7 +168,7 @@ def breathing_guide():
     st.rerun()
 
 # ==========================================
-# 6. 主程序逻辑
+# 5. 主程序逻辑
 # ==========================================
 def main():
     st.set_page_config(page_title="StressMind Pro", page_icon="🪻", layout="wide")
@@ -296,16 +293,8 @@ def main():
             with cam_col:
                 ctx = webrtc_streamer(
                     key="hrv_cam",
-                    video_processor_factory=HRVProcessor, # 🌟 关键修改：使用类
-                    # 使用强大的公共节点
-                    rtc_configuration={
-                        "iceServers": [
-                            {"urls": ["stun:global.stun.twilio.com:3478"]},
-                            {"urls": ["stun:stun.cloudflare.com:3478"]},
-                            {"urls": ["stun:stun.l.google.com:19302"]},
-                            {"urls": ["stun:stun.qq.com:3478"]}
-                        ]
-                    }
+                    video_frame_callback=video_frame_callback,
+                    rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
                 )
             if not ctx or not ctx.state.playing:
                 plot_place.warning("👆 请先在右侧视频框中点击 'START' 允许调用摄像头。")
@@ -323,15 +312,15 @@ def main():
         for i in range(total_loops):
             if not st.session_state.running or st.session_state.stage != "measuring": break
             val = None
-            
             if mode == "实时摄像头":
-                if ctx and ctx.video_processor:
-                    val = ctx.video_processor.green_val
+                if ctx and ctx.state.playing:
+                    # 获取纯净全局变量数据，不卡顿
+                    with global_webrtc_lock:
+                        val = global_green_val
             else:
                 val = source_obj.get_next_sample()
                 
-            if val is not None: 
-                data_buffer.append(val)
+            if val is not None: data_buffer.append(val)
             
             if i % 10 == 0:
                 if len(data_buffer) > 10 and np.std(data_buffer[-10:]) > 0.001:
