@@ -294,7 +294,13 @@ def main():
                 ctx = webrtc_streamer(
                     key="hrv_cam",
                     video_frame_callback=video_frame_callback,
-                    rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+                    rtc_configuration={
+                        "iceServers": [
+                            {"urls": ["stun:stun.qq.com:3478"]},
+                            {"urls": ["stun:stun.miwifi.com:3478"]},
+                            {"urls": ["stun:stun.l.google.com:19302"]}
+                        ]
+                    }
                 )
             if not ctx or not ctx.state.playing:
                 plot_place.warning("👆 请先在右侧视频框中点击 'START' 允许调用摄像头。")
